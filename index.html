@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>AgriTani Gunung Tinggi — Aplikasi Pertanian Cerdas</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Nunito',sans-serif;background:#F0FBF3;min-height:100vh;display:flex;justify-content:center}
+#app{width:100%;max-width:430px;min-height:100vh;position:relative;padding-bottom:72px;background:#F0FBF3}
+.header{background:linear-gradient(135deg,#2D6A4F,#40916C);color:#fff;padding:20px 20px 16px;position:sticky;top:0;z-index:10}
+.header h1{font-size:20px;font-weight:800;letter-spacing:-0.5px}
+.header p{font-size:12px;opacity:.8;margin-top:2px}
+nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#fff;border-top:1px solid #95D5B2;display:flex;z-index:20;box-shadow:0 -4px 20px rgba(0,0,0,.08)}
+.nav-btn{flex:1;padding:10px 0 8px;border:none;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:inherit;transition:color .2s}
+.nav-btn.active{color:#2D6A4F}
+.nav-btn:not(.active){color:#52796F}
+.nav-btn span.icon{font-size:22px}
+.nav-btn span.label{font-size:9px;font-weight:700;letter-spacing:.3px;text-transform:uppercase}
+.page{display:none;padding:0 0 8px}
+.page.active{display:block}
+.card{background:#fff;border-radius:16px;margin:12px 16px;padding:16px;box-shadow:0 2px 12px rgba(45,106,79,.08);border:1px solid #D8F3DC}
+.section-title{font-size:13px;font-weight:800;color:#52796F;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+.btn{background:#2D6A4F;color:#fff;border:none;border-radius:12px;padding:10px 18px;font-size:14px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit}
+.btn.muted{background:#52796F}
+.btn.danger{background:#E76F51}
+.btn.info{background:#48CAE4}
+input,textarea{border:1.5px solid #95D5B2;border-radius:10px;padding:10px 14px;font-size:14px;font-family:inherit;background:#F0FBF3;width:100%;outline:none;color:#1B4332}
+input:focus,textarea:focus{border-color:#2D6A4F}
+.badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;display:inline-block}
+.pill{background:#D8F3DC;color:#2D6A4F;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;display:inline-block;margin:2px 2px 0 0}
+.progress-bar{background:#D8F3DC;border-radius:99px;height:8px;overflow:hidden;margin:8px 0 4px}
+.progress-fill{height:100%;background:linear-gradient(90deg,#95D5B2,#2D6A4F);border-radius:99px;transition:width .5s}
+.chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 130px)}
+.chat-messages{flex:1;overflow-y:auto;padding:12px 16px}
+.chat-input-area{padding:10px 16px 12px;background:#F0FBF3;border-top:1px solid #D8F3DC}
+.chat-input-row{display:flex;gap:8px}
+.msg{display:flex;margin-bottom:10px}
+.msg.user{justify-content:flex-end}
+.msg-bubble{max-width:78%;border-radius:16px;padding:10px 14px;font-size:13px;line-height:1.6;white-space:pre-wrap}
+.msg.user .msg-bubble{background:#2D6A4F;color:#fff;border-radius:16px 16px 4px 16px}
+.msg.assistant .msg-bubble{background:#fff;color:#1B4332;border-radius:16px 16px 16px 4px;border:1px solid #D8F3DC}
+.quick-q{background:#fff;border:1px solid #95D5B2;border-radius:10px;padding:10px 12px;font-size:12px;color:#2D6A4F;cursor:pointer;text-align:left;font-family:inherit;font-weight:600;width:100%}
+.weather-card{background:linear-gradient(135deg,#40916C,#2D6A4F);color:#fff;border:none}
+.forecast-item{background:rgba(255,255,255,.15);border-radius:10px;padding:8px 10px;text-align:center;min-width:52px}
+.harga-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #D8F3DC}
+.scan-drop{border:2px dashed #95D5B2;background:#D8F3DC;text-align:center}
+.result-row{margin-bottom:10px}
+.result-label{font-size:12px;font-weight:800;color:#52796F;margin-bottom:2px}
+.result-val{font-size:13px;color:#1B4332;line-height:1.6;background:#F0FBF3;border-radius:8px;padding:8px 10px}
+.kt-card{cursor:pointer;transition:border .1s}
+.kt-card.selected{border:2px solid #2D6A4F}
+#scan-img{width:100%;border-radius:10px;margin-bottom:12px}
+.form-label{font-size:12px;font-weight:700;color:#52796F;margin-bottom:4px}
+.form-group{margin-bottom:10px}
+.tip-row{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #D8F3DC}
+.empty-state{text-align:center;padding:32px;color:#52796F}
+@media(max-width:430px){#app{max-width:100%}nav{max-width:100%}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1 id="page-title">🌿 Agritani Gunung Tinggi</h1>
+    <p>Aplikasi Pertanian Cerdas Kalimantan Selatan</p>
+  </div>
+
+  <!-- HOME -->
+  <div class="page active" id="page-home">
+    <div class="card weather-card" id="weather-card">
+      <div style="font-size:12px;opacity:.8;margin-bottom:4px">📍 Memuat cuaca...</div>
+      <div style="font-size:14px;opacity:.7">Mengambil data cuaca...</div>
+    </div>
+    <div style="padding:0 16px">
+      <div class="section-title">Menu Cepat</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button onclick="goTab('ai')" style="background:#fff;border:1px solid #D8F3DC;border-radius:14px;padding:14px;text-align:left;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+          <div style="font-size:28px;margin-bottom:6px">🤖</div>
+          <div style="font-size:14px;font-weight:800;color:#2D6A4F">Tanya AI</div>
+          <div style="font-size:11px;color:#52796F;margin-top:2px">Konsultasi pertanian</div>
+        </button>
+        <button onclick="goTab('scan')" style="background:#fff;border:1px solid #D8F3DC;border-radius:14px;padding:14px;text-align:left;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+          <div style="font-size:28px;margin-bottom:6px">📷</div>
+          <div style="font-size:14px;font-weight:800;color:#E76F51">Scan Penyakit</div>
+          <div style="font-size:11px;color:#52796F;margin-top:2px">Foto & analisis</div>
+        </button>
+        <button onclick="goTab('kelompok')" style="background:#fff;border:1px solid #D8F3DC;border-radius:14px;padding:14px;text-align:left;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+          <div style="font-size:28px;margin-bottom:6px">👥</div>
+          <div style="font-size:14px;font-weight:800;color:#48CAE4">Kelompok Tani</div>
+          <div style="font-size:11px;color:#52796F;margin-top:2px">Cari kelompok</div>
+        </button>
+        <button onclick="goTab('jadwal')" style="background:#fff;border:1px solid #D8F3DC;border-radius:14px;padding:14px;text-align:left;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+          <div style="font-size:28px;margin-bottom:6px">📅</div>
+          <div style="font-size:14px;font-weight:800;color:#F4A261">Jadwal Tanam</div>
+          <div style="font-size:11px;color:#52796F;margin-top:2px">Atur jadwal</div>
+        </button>
+      </div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <div class="section-title">💰 Harga Pasar Hari Ini</div>
+      <div id="harga-list"></div>
+    </div>
+    <div class="card">
+      <div class="section-title">📚 Tips Pertanian</div>
+      <div id="tips-list"></div>
+    </div>
+  </div>
+
+  <!-- AI CHAT -->
+  <div class="page" id="page-ai">
+    <div class="chat-wrap">
+      <div style="padding:12px 16px 0">
+        <div style="background:#D8F3DC;border-radius:12px;padding:12px 14px">
+          <div style="font-size:13px;color:#2D6A4F;font-weight:700">🌱 Asisten Pertanian AI</div>
+          <div style="font-size:12px;color:#52796F;margin-top:3px">Tanya tentang hama, pupuk, cuaca tanam, panen, dan lainnya.</div>
+        </div>
+      </div>
+      <div class="chat-messages" id="chat-messages">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px" id="quick-questions">
+          <button class="quick-q" onclick="sendQuick('Cara mengatasi hama wereng?')">Cara mengatasi hama wereng?</button>
+          <button class="quick-q" onclick="sendQuick('Kapan waktu tanam padi terbaik?')">Kapan waktu tanam padi terbaik?</button>
+          <button class="quick-q" onclick="sendQuick('Dosis pupuk urea untuk jagung?')">Dosis pupuk urea untuk jagung?</button>
+          <button class="quick-q" onclick="sendQuick('Cara buat pestisida nabati?')">Cara buat pestisida nabati?</button>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <div class="chat-input-row">
+          <input type="text" id="chat-input" placeholder="Tanyakan seputar pertanian..." onkeydown="if(event.key==='Enter')sendChat()"/>
+          <button class="btn" onclick="sendChat()" style="border-radius:10px;padding:10px 14px">➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCAN -->
+  <div class="page" id="page-scan">
+    <div style="padding:0 16px">
+      <div class="card scan-drop">
+        <div style="font-size:48px;margin-bottom:8px">📷</div>
+        <div style="font-size:15px;font-weight:800;color:#2D6A4F;margin-bottom:4px">Deteksi Penyakit Tanaman</div>
+        <div style="font-size:13px;color:#52796F;margin-bottom:14px;line-height:1.5">Ambil atau upload foto tanaman untuk mendeteksi penyakit, hama, dan cara penanganannya menggunakan AI.</div>
+        <input type="file" id="file-gallery" accept="image/*" style="display:none" onchange="handleImage(event)"/>
+        <input type="file" id="file-camera" accept="image/*" capture="environment" style="display:none" onchange="handleImage(event)"/>
+        <div style="display:flex;gap:8px;justify-content:center">
+          <button class="btn muted" onclick="document.getElementById('file-gallery').click()">🖼️ Galeri</button>
+          <button class="btn" onclick="document.getElementById('file-camera').click()">📷 Kamera</button>
+        </div>
+      </div>
+      <div id="scan-result" style="display:none">
+        <div class="card">
+          <img id="scan-img" src="" alt="Tanaman"/>
+          <div id="scan-loading" style="text-align:center;padding:16px">
+            <div style="font-size:32px;margin-bottom:8px">🔍</div>
+            <div style="font-size:14px;color:#52796F">AI sedang menganalisis tanaman...</div>
+          </div>
+          <div id="scan-output" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KELOMPOK TANI -->
+  <div class="page" id="page-kelompok">
+    <div style="padding:0 16px">
+      <input type="text" id="kt-search" placeholder="🔍 Cari nama, kecamatan, komoditas..." style="margin:12px 0" oninput="renderKT()"/>
+      <div style="font-size:12px;color:#52796F;margin-bottom:8px" id="kt-count"></div>
+      <div id="kt-list"></div>
+    </div>
+  </div>
+
+  <!-- JADWAL -->
+  <div class="page" id="page-jadwal">
+    <div style="padding:0 16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0">
+        <div style="font-size:15px;font-weight:800;color:#1B4332">📅 Jadwal Tanam Saya</div>
+        <button class="btn" onclick="toggleJadwalForm()">+ Tambah</button>
+      </div>
+      <div id="jadwal-form" style="display:none">
+        <div class="card" style="border:2px solid #2D6A4F">
+          <div style="font-size:14px;font-weight:800;color:#2D6A4F;margin-bottom:12px">Tambah Jadwal Baru</div>
+          <div class="form-group"><div class="form-label">Jenis Tanaman</div><input id="f-tanaman" placeholder="cth: Padi IR64"/></div>
+          <div class="form-group"><div class="form-label">Luas Lahan</div><input id="f-lahan" placeholder="cth: 0.5 ha"/></div>
+          <div class="form-group"><div class="form-label">Tanggal Tanam</div><input id="f-tanam" type="date"/></div>
+          <div class="form-group"><div class="form-label">Estimasi Panen</div><input id="f-panen" type="date"/></div>
+          <div class="form-group"><div class="form-label">Catatan</div><input id="f-catatan" placeholder="Opsional"/></div>
+          <div style="display:flex;gap:8px;margin-top:4px">
+            <button class="btn" onclick="addJadwal()" style="flex:1;justify-content:center">✓ Simpan</button>
+            <button class="btn muted" onclick="toggleJadwalForm()" style="flex:1;justify-content:center">✕ Batal</button>
+          </div>
+        </div>
+      </div>
+      <div id="jadwal-list"></div>
+    </div>
+  </div>
+
+  <nav>
+    <button class="nav-btn active" onclick="goTab('home')" id="nav-home">
+      <span class="icon">🏡</span><span class="label">Beranda</span>
+    </button>
+    <button class="nav-btn" onclick="goTab('ai')" id="nav-ai">
+      <span class="icon">🤖</span><span class="label">Tanya AI</span>
+    </button>
+    <button class="nav-btn" onclick="goTab('scan')" id="nav-scan">
+      <span class="icon">📷</span><span class="label">Scan</span>
+    </button>
+    <button class="nav-btn" onclick="goTab('kelompok')" id="nav-kelompok">
+      <span class="icon">👥</span><span class="label">Kelompok</span>
+    </button>
+    <button class="nav-btn" onclick="goTab('jadwal')" id="nav-jadwal">
+      <span class="icon">📅</span><span class="label">Jadwal</span>
+    </button>
+  </nav>
+</div>
+
+<script>
+// ── Firebase Config ──
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDgENEXLI4CR8fxgdzTYN3dpL5MyQ6ughU",
+  projectId: "agritani-gunungtinggi",
+  databaseURL: "https://agritani-gunungtinggi-default-rtdb.asia-southeast1.firebasedatabase.app",
+  storageBucket: "agritani-gunungtinggi.firebasestorage.app",
+};
+
+// ── Data ──
+const KELOMPOK_TANI = [
+  {id:1,nama:"Marga Tani",desa:"Kelurahan Gunung Tinggi",kec:"Batulicin",kota:"Tanah Bumbu",kontak:"081234567890",komoditas:["Padi"],anggota:45,lat:-3.47135,lng:115.95373},
+  {id:2,nama:"GAPOKTAN BINA Bersama",desa:"Kelurahan Gunung Tinggi",kec:"Batulicin",kota:"Tanah Bumbu",kontak:"081234567890",komoditas:["Padi"],anggota:45,lat:-3.47135,lng:115.95373},
+];
+
+const HARGA_PASAR = [
+  {k:"Padi (GKP)",s:"kg",h:5200,t:"up",p:2.1},{k:"Jagung",s:"kg",h:4800,t:"up",p:1.5},
+  {k:"Kedelai",s:"kg",h:9500,t:"down",p:0.8},{k:"Cabai Merah",s:"kg",h:28000,t:"up",p:5.2},
+  {k:"Bawang Merah",s:"kg",h:22000,t:"down",p:1.2},{k:"Tomat",s:"kg",h:8500,t:"up",p:3.4},
+  {k:"Singkong",s:"kg",h:1800,t:"stable",p:0},{k:"Karet",s:"kg",h:12500,t:"up",p:1.8},
+];
+
+const TIPS = [
+  {k:"Hama",j:"Cara Mengatasi Hama Wereng Padi",i:"Gunakan varietas tahan wereng, tanam serempak, dan gunakan pestisida nabati dari daun mimba bila serangan ringan."},
+  {k:"Nutrisi",j:"Pemupukan Organik untuk Sayuran",i:"Kompos matang, pupuk kandang, dan pupuk hijau meningkatkan kesuburan tanah secara berkelanjutan."},
+  {k:"Irigasi",j:"Irigasi Tetes untuk Hemat Air",i:"Sistem irigasi tetes menghemat air 30-50% dibanding irigasi konvensional dan mengurangi risiko penyakit jamur."},
+  {k:"Budidaya",j:"Rotasi Tanaman Cegah Penyakit",i:"Ganti jenis tanaman setiap musim tanam untuk memutus siklus hama dan penyakit tanah."},
+];
+
+// ── State ──
+let chatHistory = [];
+let jadwalList = JSON.parse(localStorage.getItem('agritani_jadwal')||'[]');
+if(!jadwalList.length) jadwalList=[{id:1,tanaman:"Padi IR64",lahan:"0.5 ha",tanam:"2026-06-10",panen:"2026-10-10",catatan:"Pupuk NPK minggu ke-3"}];
+let selectedKT = null;
+
+const pageTitles = {
+  home:"Agritani Gunung Tinggi",
+  ai:"Tanya AI Pertanian",
+  scan:"Deteksi Penyakit",
+  kelompok:"Kelompok Tani",
+  jadwal:"Jadwal Tanam"
+};
+
+// ── Navigation ──
+function goTab(tab){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+tab).classList.add('active');
+  document.getElementById('nav-'+tab).classList.add('active');
+  document.getElementById('page-title').textContent='🌿 '+pageTitles[tab];
+}
+
+// ── Weather ──
+function weatherIcon(code){
+  if(code===0)return{l:"Cerah",i:"☀️"};
+  if(code<=3)return{l:"Berawan",i:"⛅"};
+  if(code<=67)return{l:"Hujan",i:"🌧️"};
+  if(code<=77)return{l:"Bersalju",i:"❄️"};
+  return{l:"Badai",i:"⛈️"};
+}
+async function loadWeather(){
+  try{
+    const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude=-3.47242&longitude=115.95039&current=temperature_2m,weathercode,windspeed_10m,relative_humidity_2m&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_sum&timezone=Asia%2FMakassar&forecast_days=5');
+    const d=await r.json();
+    const w=weatherIcon(d.current.weathercode);
+    const forecast=d.daily.time.slice(0,5).map((t,i)=>{
+      const wf=weatherIcon(d.daily.weathercode?.[i]||0);
+      return `<div class="forecast-item"><div style="font-size:10px;opacity:.8">${new Date(t).toLocaleDateString('id',{weekday:'short'})}</div><div style="font-size:18px;margin:4px 0">${wf.i}</div><div style="font-size:11px;font-weight:700">${Math.round(d.daily.temperature_2m_max[i])}°</div><div style="font-size:10px;opacity:.7">${Math.round(d.daily.temperature_2m_min[i])}°</div></div>`;
+    }).join('');
+    document.getElementById('weather-card').innerHTML=`
+      <div style="font-size:12px;opacity:.8;margin-bottom:4px">📍 Tanah Bumbu, Kalteng</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:48px">${w.i}</div>
+        <div><div style="font-size:36px;font-weight:800">${Math.round(d.current.temperature_2m)}°C</div><div style="font-size:14px;opacity:.9">${w.l}</div></div>
+      </div>
+      <div style="display:flex;gap:16px;margin-top:12px;font-size:12px;opacity:.85">
+        <span>💧 ${d.current.relative_humidity_2m}%</span>
+        <span>🌬️ ${Math.round(d.current.windspeed_10m)} km/h</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;overflow-x:auto;padding-bottom:4px">${forecast}</div>`;
+  }catch(e){
+    document.getElementById('weather-card').innerHTML='<div style="opacity:.8">Gagal memuat cuaca</div>';
+  }
+}
+
+// ── Harga & Tips ──
+function renderHarga(){
+  document.getElementById('harga-list').innerHTML=HARGA_PASAR.map(h=>`
+    <div class="harga-row">
+      <div style="font-size:14px;color:#1B4332;font-weight:600">${h.k}</div>
+      <div style="text-align:right">
+        <div style="font-size:14px;font-weight:800;color:#1B4332">Rp ${h.h.toLocaleString()}/${h.s}</div>
+        <div style="font-size:11px;color:${h.t==='up'?'#2D9E5F':h.t==='down'?'#E76F51':'#52796F'}">${h.t==='up'?'▲':h.t==='down'?'▼':'─'} ${h.p>0?h.p+'%':'Stabil'}</div>
+      </div>
+    </div>`).join('');
+}
+function renderTips(){
+  document.getElementById('tips-list').innerHTML=TIPS.map(t=>`
+    <div class="tip-row">
+      <span class="badge" style="background:#2D6A4F22;color:#2D6A4F">${t.k}</span>
+      <div style="font-size:14px;font-weight:700;color:#1B4332;margin:6px 0 3px">${t.j}</div>
+      <div style="font-size:13px;color:#52796F;line-height:1.5">${t.i}</div>
+    </div>`).join('');
+}
+
+// ── Chat AI ──
+async function callClaude(messages){
+  const r=await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body:JSON.stringify({
+      model:"claude-sonnet-4-20250514",
+      max_tokens:1000,
+      system:"Kamu adalah asisten pertanian ahli untuk petani Indonesia, khususnya Kalimantan Selatan. Jawab dalam Bahasa Indonesia yang mudah dipahami petani. Fokus pada pertanian tropis, hama, pupuk, cuaca, dan hasil panen. Jawab singkat dan praktis.",
+      messages
+    })
+  });
+  const d=await r.json();
+  return d.content?.map(c=>c.text||'').join('')||'Gagal mendapat respons.';
+}
+function appendMsg(role,text){
+  const qq=document.getElementById('quick-questions');
+  if(qq)qq.remove();
+  const wrap=document.getElementById('chat-messages');
+  const div=document.createElement('div');
+  div.className='msg '+(role==='user'?'user':'assistant');
+  div.innerHTML=(role==='assistant'?'<div style="font-size:22px;margin-right:8px;align-self:flex-end">🌿</div>':'')+`<div class="msg-bubble">${text}</div>`;
+  wrap.appendChild(div);
+  wrap.scrollTop=wrap.scrollHeight;
+}
+async function sendChat(){
+  const inp=document.getElementById('chat-input');
+  const txt=inp.value.trim();
+  if(!txt)return;
+  inp.value='';
+  appendMsg('user',txt);
+  chatHistory.push({role:'user',content:txt});
+  appendMsg('assistant','Sedang berpikir...');
+  const msgs=document.querySelectorAll('#chat-messages .msg');
+  const last=msgs[msgs.length-1].querySelector('.msg-bubble');
+  try{
+    const reply=await callClaude(chatHistory);
+    chatHistory.push({role:'assistant',content:reply});
+    last.textContent=reply;
+  }catch(e){last.textContent='Maaf, terjadi kesalahan koneksi.';}
+  document.getElementById('chat-messages').scrollTop=document.getElementById('chat-messages').scrollHeight;
+}
+function sendQuick(q){document.getElementById('chat-input').value=q;sendChat();}
+
+// ── Scan Penyakit ──
+async function handleImage(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=async(ev)=>{
+    const base64=ev.target.result.split(',')[1];
+    document.getElementById('scan-result').style.display='block';
+    document.getElementById('scan-img').src=ev.target.result;
+    document.getElementById('scan-loading').style.display='block';
+    document.getElementById('scan-output').style.display='none';
+    try{
+      const r=await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST",
+        headers:{"Content-Type":"application/json","anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+        body:JSON.stringify({
+          model:"claude-sonnet-4-20250514",
+          max_tokens:1000,
+          system:"Kamu adalah ahli patologi tanaman. Analisis gambar tanaman dan identifikasi penyakit/hama. Jawab dalam Bahasa Indonesia dengan format JSON: {\"tanaman\": \"...\", \"kondisi\": \"...\", \"penyakit\": \"...\", \"penyebab\": \"...\", \"gejala\": \"...\", \"pengobatan\": \"...\", \"pencegahan\": \"...\", \"tingkat_keparahan\": \"ringan/sedang/parah\"}. Hanya JSON tanpa komentar.",
+          messages:[{role:"user",content:[
+            {type:"image",source:{type:"base64",media_type:file.type||"image/jpeg",data:base64}},
+            {type:"text",text:"Analisis kondisi tanaman dalam foto ini."}
+          ]}]
+        })
+      });
+      const d=await r.json();
+      const text=d.content?.map(c=>c.text||'').join('')||'{}';
+      const clean=text.replace(/```json|```/g,'').trim();
+      const res=JSON.parse(clean);
+      const sev=res.tingkat_keparahan;
+      const sevColor=sev==='parah'?'#E76F51':sev==='sedang'?'#E9C46A':'#2D6A4F';
+      const rows=[
+        {l:"🦠 Penyakit",v:res.penyakit},{l:"⚠️ Penyebab",v:res.penyebab},
+        {l:"😷 Gejala",v:res.gejala},{l:"💊 Pengobatan",v:res.pengobatan},
+        {l:"🛡️ Pencegahan",v:res.pencegahan}
+      ].filter(r=>r.v).map(r=>`<div class="result-row"><div class="result-label">${r.l}</div><div class="result-val">${r.v}</div></div>`).join('');
+      document.getElementById('scan-output').innerHTML=`
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-size:16px;font-weight:800;color:#1B4332">${res.tanaman||'Tanaman'}</div>
+          <span class="badge" style="background:${sevColor}22;color:${sevColor}">${(sev||'terdeteksi').toUpperCase()}</span>
+        </div>${rows}`;
+      document.getElementById('scan-loading').style.display='none';
+      document.getElementById('scan-output').style.display='block';
+    }catch(err){
+      document.getElementById('scan-loading').innerHTML='<div style="color:#E76F51">Gagal menganalisis. Coba lagi.</div>';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── Kelompok Tani ──
+function renderKT(){
+  const q=(document.getElementById('kt-search').value||'').toLowerCase();
+  const filtered=KELOMPOK_TANI.filter(kt=>
+    kt.nama.toLowerCase().includes(q)||kt.kec.toLowerCase().includes(q)||
+    kt.komoditas.some(k=>k.toLowerCase().includes(q))
+  );
+  document.getElementById('kt-count').textContent=filtered.length+' kelompok ditemukan';
+  document.getElementById('kt-list').innerHTML=filtered.map(kt=>`
+    <div class="card kt-card ${selectedKT===kt.id?'selected':''}" onclick="toggleKT(${kt.id})">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:800;color:#1B4332">${kt.nama}</div>
+          <div style="font-size:12px;color:#52796F;margin-top:3px">📍 ${kt.desa}, ${kt.kec}, ${kt.kota}</div>
+        </div>
+        <span class="badge" style="background:#40916C22;color:#40916C">${kt.anggota} anggota</span>
+      </div>
+      <div style="margin-top:8px">${kt.komoditas.map(k=>`<span class="pill">${k}</span>`).join('')}</div>
+      ${selectedKT===kt.id?`<div style="margin-top:12px;padding-top:12px;border-top:1px solid #D8F3DC;display:flex;gap:10px">
+        <a href="tel:${kt.kontak}" class="btn" style="flex:1;justify-content:center;font-size:13px;text-decoration:none">📞 Hubungi</a>
+        <a href="https://maps.google.com/?q=${kt.lat},${kt.lng}" target="_blank" class="btn info" style="flex:1;justify-content:center;font-size:13px;text-decoration:none">🗺️ Peta</a>
+      </div>`:''}
+    </div>`).join('');
+}
+function toggleKT(id){
+  selectedKT=selectedKT===id?null:id;
+  renderKT();
+}
+
+// ── Jadwal Tanam ──
+function saveJadwal(){localStorage.setItem('agritani_jadwal',JSON.stringify(jadwalList));}
+function toggleJadwalForm(){
+  const f=document.getElementById('jadwal-form');
+  f.style.display=f.style.display==='none'?'block':'none';
+}
+function addJadwal(){
+  const tanaman=document.getElementById('f-tanaman').value.trim();
+  if(!tanaman)return;
+  jadwalList.push({
+    id:Date.now(),
+    tanaman,
+    lahan:document.getElementById('f-lahan').value,
+    tanam:document.getElementById('f-tanam').value,
+    panen:document.getElementById('f-panen').value,
+    catatan:document.getElementById('f-catatan').value
+  });
+  saveJadwal();
+  renderJadwal();
+  toggleJadwalForm();
+  ['f-tanaman','f-lahan','f-tanam','f-panen','f-catatan'].forEach(id=>document.getElementById(id).value='');
+}
+function deleteJadwal(id){
+  jadwalList=jadwalList.filter(j=>j.id!==id);
+  saveJadwal();
+  renderJadwal();
+}
+function renderJadwal(){
+  if(!jadwalList.length){
+    document.getElementById('jadwal-list').innerHTML='<div class="empty-state"><div style="font-size:48px;margin-bottom:8px">📅</div><div style="font-size:14px">Belum ada jadwal tanam</div></div>';
+    return;
+  }
+  const today=new Date();
+  document.getElementById('jadwal-list').innerHTML=jadwalList.map(j=>{
+    const tanam=new Date(j.tanam),panen=new Date(j.panen);
+    const total=panen-tanam,elapsed=today-tanam;
+    const prog=Math.min(100,Math.max(0,Math.round((elapsed/total)*100)));
+    const hariPanen=Math.max(0,Math.round((panen-today)/(1000*60*60*24)));
+    const sevColor=hariPanen<14?'#E9C46A':'#2D6A4F';
+    return `<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div><div style="font-size:16px;font-weight:800;color:#1B4332">🌾 ${j.tanaman}</div><div style="font-size:12px;color:#52796F;margin-top:2px">📐 ${j.lahan||'-'}</div></div>
+        <span class="badge" style="background:${sevColor}22;color:${sevColor}">${hariPanen>0?hariPanen+' hari lagi':'Panen!'}</span>
+      </div>
+      <div style="display:flex;gap:16px;margin:10px 0;font-size:12px;color:#52796F">
+        <span>🌱 Tanam: ${j.tanam||'-'}</span><span>🌾 Panen: ${j.panen||'-'}</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${prog}%"></div></div>
+      <div style="font-size:11px;color:#52796F">${prog}% masa tanam</div>
+      ${j.catatan?`<div style="font-size:12px;color:#52796F;margin-top:8px;font-style:italic">📝 ${j.catatan}</div>`:''}
+      <button onclick="deleteJadwal(${j.id})" style="margin-top:10px;background:none;border:1px solid #E76F5122;color:#E76F51;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit">🗑️ Hapus</button>
+    </div>`;
+  }).join('');
+}
+
+// ── Init ──
+loadWeather();
+renderHarga();
+renderTips();
+renderKT();
+renderJadwal();
+</script>
+</body>
+</html>
