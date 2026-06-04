@@ -222,6 +222,11 @@ const FIREBASE_CONFIG = {
   storageBucket: "agritani-gunungtinggi.firebasestorage.app",
 };
 
+// ── Gemini API Key — GANTI DENGAN API KEY KAMU ──
+// Dapatkan gratis di: https://aistudio.google.com/apikey
+const GEMINI_API_KEY = "AQ.Ab8RN6JaXWIITdy7NeVa6xE6JGWDAz1bNjk7zGxPrv7dh-mmOw";
+const GEMINI_MODEL = "gemini-2.0-flash";
+
 // ── Data ──
 const KELOMPOK_TANI = [
   {id:1,nama:"Marga Tani",desa:"Kelurahan Gunung Tinggi",kec:"Batulicin",kota:"Tanah Bumbu",kontak:"081234567890",komoditas:["Padi"],anggota:45,lat:-3.47135,lng:115.95373},
@@ -283,7 +288,7 @@ async function loadWeather(){
       return `<div class="forecast-item"><div style="font-size:10px;opacity:.8">${new Date(t).toLocaleDateString('id',{weekday:'short'})}</div><div style="font-size:18px;margin:4px 0">${wf.i}</div><div style="font-size:11px;font-weight:700">${Math.round(d.daily.temperature_2m_max[i])}°</div><div style="font-size:10px;opacity:.7">${Math.round(d.daily.temperature_2m_min[i])}°</div></div>`;
     }).join('');
     document.getElementById('weather-card').innerHTML=`
-      <div style="font-size:12px;opacity:.8;margin-bottom:4px">📍 Tanah Bumbu, Kalteng</div>
+      <div style="font-size:12px;opacity:.8;margin-bottom:4px">📍 Tanah Bumbu, Kalimantan Selatan</div>
       <div style="display:flex;align-items:center;gap:12px">
         <div style="font-size:48px">${w.i}</div>
         <div><div style="font-size:36px;font-weight:800">${Math.round(d.current.temperature_2m)}°C</div><div style="font-size:14px;opacity:.9">${w.l}</div></div>
@@ -318,20 +323,21 @@ function renderTips(){
     </div>`).join('');
 }
 
-// ── Chat AI ──
-async function callClaude(messages){
-  const r=await fetch("https://api.anthropic.com/v1/messages",{
+// ── Chat AI (Gemini) ──
+async function callGemini(messages){
+  // Konversi format history ke Gemini format
+  const systemPrompt = "Kamu adalah asisten pertanian ahli untuk petani Indonesia, khususnya Kalimantan Selatan. Jawab dalam Bahasa Indonesia yang mudah dipahami petani. Fokus pada pertanian tropis, hama, pupuk, cuaca, dan hasil panen. Jawab singkat dan praktis.";
+  const contents = messages.map(m=>({
+    role: m.role==='assistant'?'model':'user',
+    parts:[{text: m.role==='user' && messages.indexOf(m)===0 ? systemPrompt+'\n\n'+m.content : m.content}]
+  }));
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,{
     method:"POST",
-    headers:{"Content-Type":"application/json","anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-    body:JSON.stringify({
-      model:"claude-sonnet-4-20250514",
-      max_tokens:1000,
-      system:"Kamu adalah asisten pertanian ahli untuk petani Indonesia, khususnya Kalimantan Selatan. Jawab dalam Bahasa Indonesia yang mudah dipahami petani. Fokus pada pertanian tropis, hama, pupuk, cuaca, dan hasil panen. Jawab singkat dan praktis.",
-      messages
-    })
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({contents})
   });
   const d=await r.json();
-  return d.content?.map(c=>c.text||'').join('')||'Gagal mendapat respons.';
+  return d.candidates?.[0]?.content?.parts?.[0]?.text||'Gagal mendapat respons.';
 }
 function appendMsg(role,text){
   const qq=document.getElementById('quick-questions');
@@ -354,7 +360,7 @@ async function sendChat(){
   const msgs=document.querySelectorAll('#chat-messages .msg');
   const last=msgs[msgs.length-1].querySelector('.msg-bubble');
   try{
-    const reply=await callClaude(chatHistory);
+    const reply=await callGemini(chatHistory);
     chatHistory.push({role:'assistant',content:reply});
     last.textContent=reply;
   }catch(e){last.textContent='Maaf, terjadi kesalahan koneksi.';}
@@ -374,21 +380,17 @@ async function handleImage(e){
     document.getElementById('scan-loading').style.display='block';
     document.getElementById('scan-output').style.display='none';
     try{
-      const r=await fetch("https://api.anthropic.com/v1/messages",{
+      const systemScan="Kamu adalah ahli patologi tanaman. Analisis gambar tanaman dan identifikasi penyakit/hama. Jawab dalam Bahasa Indonesia dengan format JSON: {\"tanaman\": \"...\", \"kondisi\": \"...\", \"penyakit\": \"...\", \"penyebab\": \"...\", \"gejala\": \"...\", \"pengobatan\": \"...\", \"pencegahan\": \"...\", \"tingkat_keparahan\": \"ringan/sedang/parah\"}. Hanya JSON tanpa komentar.";
+      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,{
         method:"POST",
-        headers:{"Content-Type":"application/json","anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-        body:JSON.stringify({
-          model:"claude-sonnet-4-20250514",
-          max_tokens:1000,
-          system:"Kamu adalah ahli patologi tanaman. Analisis gambar tanaman dan identifikasi penyakit/hama. Jawab dalam Bahasa Indonesia dengan format JSON: {\"tanaman\": \"...\", \"kondisi\": \"...\", \"penyakit\": \"...\", \"penyebab\": \"...\", \"gejala\": \"...\", \"pengobatan\": \"...\", \"pencegahan\": \"...\", \"tingkat_keparahan\": \"ringan/sedang/parah\"}. Hanya JSON tanpa komentar.",
-          messages:[{role:"user",content:[
-            {type:"image",source:{type:"base64",media_type:file.type||"image/jpeg",data:base64}},
-            {type:"text",text:"Analisis kondisi tanaman dalam foto ini."}
-          ]}]
-        })
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({contents:[{role:"user",parts:[
+          {text:systemScan+"\n\nAnalisis kondisi tanaman dalam foto ini."},
+          {inline_data:{mime_type:file.type||"image/jpeg",data:base64}}
+        ]}]})
       });
       const d=await r.json();
-      const text=d.content?.map(c=>c.text||'').join('')||'{}';
+      const text=d.candidates?.[0]?.content?.parts?.[0]?.text||'{}';
       const clean=text.replace(/```json|```/g,'').trim();
       const res=JSON.parse(clean);
       const sev=res.tingkat_keparahan;
